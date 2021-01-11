@@ -64,7 +64,7 @@ export class MainComponent implements OnInit {
           }
           else if(diff.hours > 0) {
             r.timelapsed = `${diff.hours} Hours Ago`;
-            if(diff.hours >= 2)
+            if(diff.hours >= 3)
               this.oldReminders.push(r);
             else
               this.latestReminders.push(r);
