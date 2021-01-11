@@ -1,0 +1,13 @@
+
+.signup-bg {
+    background-image: url('../../assets/images/signup.jpg');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    height: 100vh;
+}
+
+
+.signup-card {
+	margin: 20vh;
+	opacity: 0.9;
+}

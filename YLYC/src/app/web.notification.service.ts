@@ -38,6 +38,7 @@ export class WebNotificationService {
     unSubscribeToNotification(user: string) {
         this.http.post('http://localhost:3000/notificationsUnSub', { user }, { observe: 'response' })
             .subscribe(resp => {
+                console.info(resp);
                 if(resp.status == 200)
                     this.authSvc.notificationEnabled$.next(resp.body['notification'])
             })
@@ -47,6 +48,7 @@ export class WebNotificationService {
     mapTokenToUser(token: any, user: string) {
         this.http.post('http://localhost:3000/notificationsSub', { token, user }, { observe: 'response'})
             .subscribe(resp => {
+                console.info(resp);
                 if(resp.status == 200)
                     this.authSvc.notificationEnabled$.next(resp.body['notification'])
             });

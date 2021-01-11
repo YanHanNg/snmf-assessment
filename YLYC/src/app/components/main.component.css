@@ -1,0 +1,19 @@
+img {
+    height: 150px;
+    width: 150px;
+    background-size: cover;
+}
+
+.card-text {
+    width: 25vh;
+    height: 8vh;
+    text-overflow: ellipsis;
+}
+
+.bg-completed {
+    background-color: lightgreen;
+}
+
+.bg-expired {
+    background-color: lightgrey;
+}

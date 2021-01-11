@@ -14,9 +14,13 @@ import { MainComponent } from './components/main.component';
 import { WebNotificationService } from './web.notification.service';
 import { AngularFireModule } from '@angular/fire';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
+import { SignupComponent } from './components/signup.component';
+import { CustomvalidationService } from './services/customvalidation.service';
+import { BackendService } from './services/backend.service';
 
 const ROUTES: Routes = [
   { path: '', component: LoginComponent },
+  { path: 'signup', component: SignupComponent },
   { path: 'main', component: MainComponent },
   { path: '**', redirectTo: '/', pathMatch: 'full' }
 ]
@@ -26,7 +30,8 @@ const ROUTES: Routes = [
     AppComponent,
     LoginComponent,
     HeaderComponent,
-    MainComponent
+    MainComponent,
+    SignupComponent
   ],
   imports: [
     BrowserModule,
@@ -38,7 +43,7 @@ const ROUTES: Routes = [
     AngularFireModule.initializeApp(environment.firebaseConfig),
     AngularFireMessagingModule
   ],
-  providers: [AuthService, WebNotificationService],
+  providers: [AuthService, WebNotificationService, CustomvalidationService, BackendService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

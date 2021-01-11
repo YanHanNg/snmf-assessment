@@ -2,12 +2,14 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from "@angular/router";
 import { BehaviorSubject, Observable } from "rxjs";
+import { User } from '../app/model/model';
 
 @Injectable()
 export class AuthService implements CanActivate {
     private token = '';
     public notificationEnabled$ = new BehaviorSubject(false);
-    private username: string = '';
+    private user_id: string = '';
+    private user: User;
 
     constructor(private http: HttpClient, private router: Router) { }
 
@@ -19,8 +21,9 @@ export class AuthService implements CanActivate {
                 console.info(resp);
                 if(resp.status == 200) {
                     this.token = resp.body.token;
-                    this.username = resp.body.user;
-                    this.notificationEnabled$.next(resp.body.notification === 0 ? false : true)
+                    this.user = resp.body.user.user;
+                    this.notificationEnabled$.next(resp.body.user.user.notification === 0 ? false : true)
+                    console.info(this.user);
                 }
                 return true;
             })
@@ -34,7 +37,7 @@ export class AuthService implements CanActivate {
     }
 
     getUser() {
-        return this.username;
+        return this.user;
     }
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {

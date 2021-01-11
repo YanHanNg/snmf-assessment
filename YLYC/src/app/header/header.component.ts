@@ -13,24 +13,26 @@ export class HeaderComponent implements OnInit {
   constructor(private authSvc: AuthService,
     private webNotificationService: WebNotificationService) { }
 
-  notification: string;
+  notification: boolean;
 
   ngOnInit(): void {
     this.authSvc.isNotificationEnabled().subscribe( bool => {
-      this.notification = bool ? "Enabled" : "Disabled"
+      //this.notification = bool ? "Enabled" : "Disabled"
+      this.notification = bool;
     })
   }
 
   toggleNotifcation() {
-    if(this.notification === "Disabled")
-      this.webNotificationService.subscribeToNotification(this.authSvc.getUser());
+    // if(this.notification === "Disabled")
+    if(!this.notification)
+      this.webNotificationService.subscribeToNotification(this.authSvc.getUser().user_id);
     else
-      this.webNotificationService.unSubscribeToNotification(this.authSvc.getUser());
+      this.webNotificationService.unSubscribeToNotification(this.authSvc.getUser().user_id);
   }
 
   isGranted = Notification.permission === 'granted';
   submitNotification(): void {
-    this.webNotificationService.subscribeToNotification(this.authSvc.getUser());
+    this.webNotificationService.subscribeToNotification(this.authSvc.getUser().user_id);
   }
 
   getNotification() {

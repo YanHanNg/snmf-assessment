@@ -1,34 +1,37 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
     <a class="navbar-brand" href="#">Your Life Your Choice</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-  
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item active">
-          <a class="nav-link" href="#">Reminder <span class="sr-only">(current)</span></a>
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" [routerLink]="['/main']">Reminder</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Reward Points</a>
+          <a class="nav-link" href="#">Rewards</a>
         </li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             SG News
           </a>
-          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item" href="#">Health</a>
-            <a class="dropdown-item" href="#">Sports</a>
-          </div>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" href="#">Health</a></li>
+            <li><a class="dropdown-item" href="#">Sports</a></li>
+          </ul>
         </li>
-        <!-- <li class="nav-item">
-          <a class="nav-link disabled" href="#">Disabled</a>
-        </li> -->
+        <li class="nav-item">
+          <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+        </li>
       </ul>
-      <button class="btn btn-outline-success my-2 my-sm-0" (click)="toggleNotifcation()">Toggle Notification</button>
-      <code>: {{notification}}</code>
-      <form class="form-inline my-2 my-lg-0">
-        <button class="btn btn-outline-success my-2 my-sm-0" (click)="getNotification()">Logout</button>
+      <div class="nav-item pr-3">
+        <a class="btn btn-outline-success my-2 my-sm-0" (click)="toggleNotifcation()"><i *ngIf="notification" class="fas fa-bell"></i><i *ngIf="!notification" class="fas fa-bell-slash"></i></a>
+      </div>
+      <hr>
+      <form class="d-flex">
+        <button class="btn btn-info" (click)="getNotification()"><i class="fas fa-sign-out-alt"></i></button>
       </form>
     </div>
-  </nav>
+  </div>
+</nav>

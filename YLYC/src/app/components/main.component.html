@@ -1,19 +1,63 @@
 <app-header></app-header>  
-<div class="container">
-    <div class="d-flex justify-content-center" *ngIf="reminders.length != 0">
-        <div class="card text-center">
-            <div class="card-header">
-              Featured
-            </div>
-            <div class="card-body">
-              <h5 class="card-title">Special title treatment</h5>
-              <img src="../../assets/images/loginbg.jpg" alt="" width="50%">
-              <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-              <a href="#" class="btn btn-primary">Go somewhere</a>
-            </div>
-            <div class="card-footer text-muted">
-              2 days ago
-            </div>
+
+
+<div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button class="accordion-button" type="button" (click)="togglePanel()" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        Latest Reminder
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample" #panel1>
+      <div class="accordion-body">
+        <div class="container-fluid mt-1" >
+          <div class="d-flex flex-wrap justify-content-center" *ngIf="latestReminders.length != 0">
+              <div class="card text-center" *ngFor="let r of latestReminders; let i = index" [ngClass]="{'bg-completed': r.status == 1}">
+                  <div class="card-header">
+                    Remember To
+                  </div>
+                  <div class="card-body">
+                    <h5 class="card-title">{{r.title}}</h5>
+                    <img src="{{r.image}}" alt="" width="50%">
+                    <p class="card-text">{{r.message}}</p>
+                    <button (click)="completeReminder(i)" class="btn btn-primary" [disabled]="r.status == 1">Complete</button>
+                  </div>
+                  <div class="card-footer text-muted">
+                    {{r.timelapsed}}
+                  </div>
+              </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingTwo">
+      <button class="accordion-button collapsed" type="button" (click)="togglePanel()" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+        Reminders more than 2 hours
+      </button>
+    </h2>
+    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample" #panel2>
+      <div class="accordion-body">
+        <div class="container-fluid mt-1" >
+          <div class="d-flex flex-wrap justify-content-center" *ngIf="oldReminders.length != 0">
+              <div class="card text-center" *ngFor="let r of oldReminders" [ngClass]="{'bg-complete': r.status == 1, 'bg-expired': r.status == 0 }">
+                  <div class="card-header">
+                    Remember To
+                  </div>
+                  <div class="card-body">
+                    <h5 class="card-title">{{r.title}}</h5>
+                    <img src="{{r.image}}" alt="" width="50%">
+                    <p class="card-text">{{r.message}}</p>
+                    <button class="btn btn-primary" disabled>Complete</button>
+                  </div>
+                  <div class="card-footer text-muted">
+                    {{r.timelapsed}}
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

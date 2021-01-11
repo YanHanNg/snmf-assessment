@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
@@ -17,14 +17,14 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      username: this.fb.control(''),
+      user_id: this.fb.control(''),
       password: this.fb.control('')
     })
   }
 
   //Login
   performLogin() {
-    this.authSvc.login(this.form.get('username').value, this.form.get('password').value)
+    this.authSvc.login(this.form.get('user_id').value, this.form.get('password').value)
       .then(data => {
           if(data)
             this.router.navigate(['/main']);

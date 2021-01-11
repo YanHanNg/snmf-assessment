@@ -1,0 +1,159 @@
+<!-- <div class="container-fluid signup-bg">
+    <div class="signup-form">
+        <form class="needs-validation" [formGroup]="form" (ngSubmit)="signUp()" novalidate>
+            <h2>Sign Up</h2>
+            <p>Please fill in this form to create an account!</p>
+            <hr>
+            <div class="form-group">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">
+                            <span class="fa fa-user"></span>
+                        </span>                    
+                    </div>
+                    <input type="text" class="form-control is-valid" name="username" formControlName="username" placeholder="Username">
+                    <div *ngIf="form.get('username').invalid">
+                        <div class="valid-feedback">
+                            Please provide a valid city.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">
+                            <i class="fa fa-paper-plane"></i>
+                        </span>                    
+                    </div>
+                    <input type="email" class="form-control is-valid" name="email" formControlName="email" placeholder="Email Address">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">
+                            <i class="fa fa-lock"></i>
+                        </span>                    
+                    </div>
+                    <input type="text" class="form-control is-valid" name="password" formControlName="password" formControlName="username" placeholder="Password">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">
+                            <i class="fa fa-lock"></i>
+                            <i class="fa fa-check"></i>
+                        </span>                    
+                    </div>
+                    <input type="text" class="form-control is-valid" name="confirm_password" formControlName="confirm_password" placeholder="Confirm Password">
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-lg">Sign Up</button>
+            </div>
+            <div class="text-center">Already have an account? <a [routerLink]="['/']">Login here</a></div>
+        </form>
+</div> -->
+<div class="container-fluid signup-bg">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card signup-card">
+                <div class="card-header">
+                    <h2>Sign Up</h2>
+                    <p>Please fill in this form to create an account!</p>
+                </div>
+                <div class="card-body">
+                    <form class="form" [formGroup]="form" (ngSubmit)="signUp()">
+                        <div class="form-group">
+                            <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                  <div class="input-group-text"><span class="fas fa-user-tie"></span></div>
+                                </div>
+                                <input type="text" class="form-control" formControlName="name" placeholder="Name of User">
+                            </div>
+                            <span class="text-danger"
+                                *ngIf="(registerFormControl.name.touched || submitted) && registerFormControl.name.errors?.required">
+                                Name is required
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                  <div class="input-group-text"><span class="fa fa-paper-plane"></span></div>
+                                </div>
+                                <input type="email" class="form-control" formControlName="email" placeholder="Email Address">
+                            </div>
+                            <span class="text-danger"
+                                *ngIf="(registerFormControl.email.touched || submitted) && registerFormControl.email.errors?.required">
+                                Email is required
+                            </span>
+                            <span class="text-danger"
+                                *ngIf="registerFormControl.email.touched && registerFormControl.email.errors?.email">
+                                Enter a valid email address
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                  <div class="input-group-text"><span class="fa fa-user"></span></div>
+                                </div>
+                                <input type="text" class="form-control" formControlName="user_id" placeholder="User Id for Login">
+                            </div>
+                            <span class="text-danger"
+                                *ngIf="(registerFormControl.user_id.touched || submitted) && registerFormControl.user_id.errors?.required">
+                                User Name is required
+                            </span>
+                            <span class="text-danger"
+                                *ngIf="registerFormControl.user_id.touched && registerFormControl.user_id.errors?.cannotContainSpace">
+                                User Name cannot contain space
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text"><span class="fas fa-user-lock"></span></div>
+                                </div>
+                                <input type="password" class="form-control" formControlName="password" placeholder="Password">
+                            </div>
+                            <span class="text-danger"
+                                *ngIf="(registerFormControl.password.touched || submitted) && registerFormControl.password.errors?.required">
+                                Password is required
+                            </span>
+                            <span class="text-danger"
+                                *ngIf="registerFormControl.password.touched && registerFormControl.password.errors?.invalidPassword">
+                                Password should have minimum 8 characters, at least 1 uppercase letter, 1 lowercase
+                                letter and 1 number
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group mb-2">
+                                <div class="input-group-prepend">
+                                  <div class="input-group-text"><span class="fas fa-user-lock"></span></div>
+                                </div>
+                                <input type="password" class="form-control" formControlName="confirm_password" placeholder="Confirm Password">
+                            </div>
+                            <span class="text-danger"
+                                *ngIf="(registerFormControl.confirm_password.touched || submitted)&& registerFormControl.confirm_password.errors?.required">
+                                Confirm Password is required
+                            </span>
+                            <span class="text-danger"
+                                *ngIf="registerFormControl.confirm_password.touched && registerFormControl.confirm_password.errors?.passwordMismatch">
+                                Passwords does not match
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success" [disabled]="form.invalid">Register</button>
+                        </div>
+                        <div class="form-group" *ngIf="errorMessage!=null">
+                            <span class="text-danger">
+                                {{errorMessage}}
+                            </span>      
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
