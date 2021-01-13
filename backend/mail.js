@@ -39,7 +39,6 @@ const sendEmail = async (toRecipient, emailType) => {
                 }
             }
             break;
-
             default: 
             break;
         }

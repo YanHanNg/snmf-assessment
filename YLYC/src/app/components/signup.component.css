@@ -11,3 +11,7 @@
 	margin: 20vh;
 	opacity: 0.9;
 }
+
+.w-12 {
+    width: 12% !important;
+}

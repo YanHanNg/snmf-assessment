@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 //import { SwPush } from '@angular/service-worker';
 import { AngularFireMessaging } from '@angular/fire/messaging';
 import { AuthService } from './auth.service';
@@ -9,7 +9,11 @@ import { AuthService } from './auth.service';
 export class WebNotificationService {
 
     //Vapid Public Key
-    readonly VAPID_PUBLIC_KEY = 'BIfwSXS9sdWcn1V9bVfA18--BkKBSpBd1eKA_Almkkvhn7HPUoZb2ftVnsPkFZMoHrs4wGN8-CUdYFfRwh1O6Vk';
+    //readonly VAPID_PUBLIC_KEY = 'BIfwSXS9sdWcn1V9bVfA18--BkKBSpBd1eKA_Almkkvhn7HPUoZb2ftVnsPkFZMoHrs4wGN8-CUdYFfRwh1O6Vk';
+
+    headers = new HttpHeaders({
+        Authorization: 'Bearer ' + this.authSvc.getAuthToken()
+    })
 
     constructor(private http: HttpClient, private afMessaging: AngularFireMessaging, private authSvc: AuthService) { 
         afMessaging.onMessage(function(payload) {
@@ -36,7 +40,7 @@ export class WebNotificationService {
     }
 
     unSubscribeToNotification(user: string) {
-        this.http.post('http://localhost:3000/notificationsUnSub', { user }, { observe: 'response' })
+        this.http.post('/notificationsUnSub', { user }, { observe: 'response' })
             .subscribe(resp => {
                 console.info(resp);
                 if(resp.status == 200)
@@ -46,15 +50,11 @@ export class WebNotificationService {
 
     //Send Subscription of the User to Server
     mapTokenToUser(token: any, user: string) {
-        this.http.post('http://localhost:3000/notificationsSub', { token, user }, { observe: 'response'})
+        this.http.post('/notificationsSub', { token, user }, { observe: 'response'})
             .subscribe(resp => {
                 console.info(resp);
                 if(resp.status == 200)
                     this.authSvc.notificationEnabled$.next(resp.body['notification'])
             });
-    }
-
-    getNotification() {
-        return this.http.get('http://localhost:3000/getNotification').toPromise();
     }
 }

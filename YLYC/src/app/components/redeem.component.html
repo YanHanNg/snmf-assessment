@@ -1,0 +1,51 @@
+<app-header></app-header>
+<div class="container">
+	<div class="row">
+		<div class="col-md-12">
+			<h2>Reward <b>Points: {{rewards_pts}}</b></h2>
+    </div>
+    <div class="bd-example">
+      <div id="carouselExampleDark" class="carousel carousel-dark slide" data-bs-ride="carousel">
+        <ol class="carousel-indicators">
+          <li data-bs-target="#carouselExampleDark" data-bs-slide-to="0" class="active"></li>
+          <!-- <li data-bs-target="#carouselExampleDark" data-bs-slide-to="1" class=""></li>
+          <li data-bs-target="#carouselExampleDark" data-bs-slide-to="2" class=""></li> -->
+        </ol>
+        <div class="carousel-inner">
+          <div class="carousel-item active" data-bs-interval="10000">
+            <img class="bd-placeholder-img bd-placeholder-img-lg d-block w-100" width="800" height="400" src="../../assets/images/smiley.svg" alt="">
+
+            <div class="carousel-caption d-none d-md-block">
+              <h5></h5>
+              <button type="button" class="btn btn-success" (click)="redeemJokes()">Redeem</button>
+              <p class="jokes-bg">{{jokeMessage}}</p>
+            </div>
+          </div>
+          <div class="carousel-item" data-bs-interval="2000">
+            <svg class="bd-placeholder-img bd-placeholder-img-lg d-block w-100" width="800" height="400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Second slide" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#eee"></rect><text x="50%" y="50%" fill="#bbb" dy=".3em">Second slide</text></svg>
+      
+            <div class="carousel-caption d-none d-md-block">
+              <h5>LOOKING FOR SPONSORS</h5>
+              <p>This place could be yours.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <svg class="bd-placeholder-img bd-placeholder-img-lg d-block w-100" width="800" height="400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Third slide" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#e5e5e5"></rect><text x="50%" y="50%" fill="#999" dy=".3em">Third slide</text></svg>
+      
+            <div class="carousel-caption d-none d-md-block">
+              <h5>LOOKING FOR SPONSORS</h5>
+              <p>This place could be yours.</p>
+            </div>
+          </div>
+        </div>
+        <!-- <a class="carousel-control-prev" href="#carouselExampleDark" role="button" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#carouselExampleDark" role="button" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </a> -->
+      </div>
+      </div>
+</div>

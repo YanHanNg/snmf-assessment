@@ -67,10 +67,8 @@
                 <div class="card-body">
                     <form class="form" [formGroup]="form" (ngSubmit)="signUp()">
                         <div class="form-group">
-                            <div class="input-group mb-2">
-                                <div class="input-group-prepend">
-                                  <div class="input-group-text"><span class="fas fa-user-tie"></span></div>
-                                </div>
+                            <div class="input-group flex-nowrap">
+                                <span class="input-group-text w-12"><span class="fas fa-user-tie"></span></span>
                                 <input type="text" class="form-control" formControlName="name" placeholder="Name of User">
                             </div>
                             <span class="text-danger"
@@ -79,10 +77,8 @@
                             </span>
                         </div>
                         <div class="form-group">
-                            <div class="input-group mb-2">
-                                <div class="input-group-prepend">
-                                  <div class="input-group-text"><span class="fa fa-paper-plane"></span></div>
-                                </div>
+                            <div class="input-group mt-3 flex-nowrap">
+                                <span class="input-group-text w-12"><span class="fa fa-paper-plane"></span></span>
                                 <input type="email" class="form-control" formControlName="email" placeholder="Email Address">
                             </div>
                             <span class="text-danger"
@@ -95,10 +91,8 @@
                             </span>
                         </div>
                         <div class="form-group">
-                            <div class="input-group mb-2">
-                                <div class="input-group-prepend">
-                                  <div class="input-group-text"><span class="fa fa-user"></span></div>
-                                </div>
+                            <div class="input-group mt-3 flex-nowrap">
+                                <span class="input-group-text w-12"><span class="fa fa-user"></span></span>
                                 <input type="text" class="form-control" formControlName="user_id" placeholder="User Id for Login">
                             </div>
                             <span class="text-danger"
@@ -111,10 +105,8 @@
                             </span>
                         </div>
                         <div class="form-group">
-                            <div class="input-group mb-2">
-                                <div class="input-group-prepend">
-                                    <div class="input-group-text"><span class="fas fa-user-lock"></span></div>
-                                </div>
+                            <div class="input-group mt-3 flex-nowrap">
+                                <span class="input-group-text w-12"><span class="fas fa-user-lock"></span></span>
                                 <input type="password" class="form-control" formControlName="password" placeholder="Password">
                             </div>
                             <span class="text-danger"
@@ -128,10 +120,8 @@
                             </span>
                         </div>
                         <div class="form-group">
-                            <div class="input-group mb-2">
-                                <div class="input-group-prepend">
-                                  <div class="input-group-text"><span class="fas fa-user-lock"></span></div>
-                                </div>
+                            <div class="input-group mt-3 flex-nowrap">
+                                <span class="input-group-text w-12"><span class="fas fa-user-lock"></span></span>
                                 <input type="password" class="form-control" formControlName="confirm_password" placeholder="Confirm Password">
                             </div>
                             <span class="text-danger"
@@ -143,7 +133,7 @@
                                 Passwords does not match
                             </span>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mt-3">
                             <button type="submit" class="btn btn-success" [disabled]="form.invalid">Register</button>
                         </div>
                         <div class="form-group" *ngIf="errorMessage!=null">

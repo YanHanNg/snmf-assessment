@@ -1,13 +1,12 @@
 require('dotenv').config();
-
 //Library
 const express = require('express');
-const mysql = require('mysql2/promise');
 
 const morgan = require('morgan');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
+const withQuery = require('with-query').default;
 
 //Email
 const { sendEmail } = require('./mail.js');
@@ -15,54 +14,23 @@ const { sendEmail } = require('./mail.js');
 //MySQL
 const { makeQuery, makeQueryForBulkInsert, pool } = require('./mysql_db.js');
 
-//Telegram Bot
-const { bot, sendRemindersViaTelegram } = require('./telegrambot.js');
+//Passport 
+const { localAuth, passport, TOKEN_SECRET, verifyJwtToken } = require('./authenticate.js')
 
-//Passport core
-const passport = require('passport');
-//Passport Strategy
-const LocalStrategy = require('passport-local').Strategy;
+//Telegram Bot
+const { sendRemindersViaTelegram } = require('./telegrambot.js');
 
 //Cron
 const cron = require('node-cron');
 
-//Token Secret for Login
-const TOKEN_SECRET = process.env.TOKEN_SECRET || 'abcd1234';
+//Schedule-task
+const { } = require('./schedule-task.js');
+
+//S3
+const { s3PutObject, s3RemoveObject, upload, readFile, s3, fs } = require('./s3.js');
 
 const app = express();
 const PORT = process.env.APP_PORT || 3000;
-
-// DATABASE  
-// Create the Database Connection Pool  
-// const pool = mysql.createPool({   
-//     host: process.env.MYSQL_SERVER || 'localhost',   
-//     port: parseInt(process.env.MYSQL_SVR_PORT) || 3306,   
-//     database: process.env.MYSQL_SCHEMA,   
-//     user: process.env.MYSQL_USERNAME,   
-//     password: process.env.MYSQL_PASSWORD,   
-//     connectionLimit: parseInt(process.env.MYSQL_CONN_LIMIT) || 4,   
-//     timezone: process.env.DB_TIMEZONE || '+08:00'   
-// })
-
-//Make a Closure, Take in SQLStatement and ConnPool  
-// const makeQuery = (sql, pool) => {  
-//     return (async (args) => {  
-//         const conn = await pool.getConnection();  
-//         try {  
-//             let results = await conn.query(sql, args || []);  
-//             //Only need first array as it contains the query results.  
-//             //index 0 => data, index 1 => metadata  
-//             return results[0];  
-//         }  
-//         catch(err) {  
-//             console.error('Error Occurred during Query', err);  
-//             throw new Error(err);
-//         }  
-//         finally{  
-//             conn.release();  
-//         }  
-//     })  
-// }  
 
 //Morgan
 app.use(morgan('combined'));
@@ -70,84 +38,27 @@ app.use(express.urlencoded({extended:true}));
 app.use(express.json());
 app.use(cors());
 
-//Get User information from DB
-const SQL_GET_USER_INFO = "SELECT user_id, name, email, reward_pts, notification, notification_token from user where user_id = ?";
-const getUserInfo = makeQuery(SQL_GET_USER_INFO, pool);
-
-// configure passport with a strategy
-passport.use(
-    new LocalStrategy(
-        { usernameField: 'username', passwordField: 'password', passReqToCallback: true },
-        ( req, user, password, done ) => {
-            //perform the authentication
-            console.info(`user_id: ${user} and password: ${password}`);
-            
-            getUserInfo( [ user, password ] )
-                .then(results => {
-                    if(results.length > 0)
-                    {
-                        done(null, 
-                            {
-                                user: {
-                                    user_id: results[0].user_id,
-                                    name: results[0].name,
-                                    email: results[0].email,
-                                    reward_pts: results[0].reward_pts,
-                                    notification: results[0].notification,
-                                },
-                                loginTime: (new Date().toString())
-                            }
-                        )
-                        return
-                    }
-                    else{
-                        done('Incorrect username and password', false);
-                        return
-                    }
-                })
-                .catch(error => {
-                    done('Error Occurred', false);
-                })
-        }
-    )
-)
-
 //passport initialize after json and formurlencoded
 app.use(passport.initialize());
 
-const mkAuth = (passport) => {
-    return (req, res, next) => {
-        const f = passport.authenticate('local', 
-            (err, user, info) => {
-                if((null != err) || (!user)) {
-                    res.status(401).json({ error: err })
-                    return
-                }
-                req.user = user;
-                next();
-            }
-        )
-        // Add this to call yourself
-        f(req, res, next)
-    }
-}
+//---------------------------------------------------Login Process----------------------------------------------------------------
 
-const localAuth = mkAuth(passport);
+const SQL_GET_USER_INFO = "SELECT user_id, name, email, rewards_pts, notification, notification_token from user where user_id = ?";
+const getUserInfo = makeQuery(SQL_GET_USER_INFO, pool);
 
 app.post('/login', 
     //passport.authenticate('local', { session: false }),
     localAuth,
     (req, res) => {
         //do smth
-        console.info('user: ', req.user);
+        console.info('User Information after LocalAuth: ', req.user);
 
         //generate JWT token
         const token = jwt.sign({
             sub: req.user.user_id,
             iss: 'YLYC',
             iat: (new Date()).getTime() / 1000, 
-            exp: ((new Date()).getTime() / 1000) + (60 * 60),
-            nbf: ((new Date()).getTime() / 1000) + 15,
+            exp: ((new Date()).getTime() / 1000) + (3600 * 24),
             data: {
                 loginTime: req.user.loginTime
             }
@@ -159,30 +70,78 @@ app.post('/login',
     })
 
 
-app.use(express.static(__dirname + '/public'));
+app.post('/getUserInfo', (req, res) => {
+    const user_id = req.body.user_id;
 
-//Start Express
-pool.getConnection()
-    .then(conn => {
-        let p0 = Promise.resolve(conn);
-        let p1 = conn.ping;
-        return Promise.all( [ p0, p1 ]);
-    })
-    .then(results => {
-        //Start Express
-        app.listen(PORT, ()=> {
-            console.info(`Server Started on PORT ${PORT} at ${new Date()}`);
+    getUserInfo([ user_id ])
+        .then(results => {
+            return res.status(200).type('application/json').json({ user: results[0] })
         })
+        .catch(err => {
+            return res.status(500).type('application/json').json({ message: 'Error in fetching user Info >>>' + err.message })
+        })
+})
 
-        let conn = results[0];
-        conn.release();
-    })
-    .catch(error => {
-        console.error('Error Occurred: ', error);
-    })
+//---------------------------User Sign Up---------------------------------------------------------------
 
+const SQL_INSERT_USER = "Insert Into User (user_id, name, password, email) values (?, ? ,sha(?), ?)";
+const insertUser = makeQuery(SQL_INSERT_USER, pool);
 
-//---------------------------------START Reminders-------------------------------------------------------------------
+app.post('/signup', (req, res) => {
+    const user = req.body;
+
+    insertUser([ user.user_id, user.name, user.password, user.email])
+        .then(results => {
+            sendEmail(user.email, 'Register');
+            return res.status(201).json({ message: "User Created Successfully"})
+            
+        })
+        .catch(error => {
+            return res.status(500).type('application/json').json({ message: 'Error During Signing up.'})
+        })
+})
+
+//--------------------------------------START USER NOTIFICATIONS SUBSCRIPTION-----------------------------------------------------
+
+//Update the user with the Sub
+const SQL_UPDATE_USER_SUB = "Update user set notification = ?, notification_token = ? where user_id = ?";
+const updateUserSubSQL = makeQuery(SQL_UPDATE_USER_SUB, pool);
+
+//webPush.setVapidDetails('127.0.0.1:8080', publicVapidKey, privateVapidKey);
+app.post('/notificationsSub', (req, res) => {
+    const token = req.body.token;
+    const user = req.body.user;
+    console.info(`Notification Token received >> ${token} for User >> ${user}`);
+
+    //Update the user with the Subscription
+    updateUserSubSQL( [ true, token, user ] )
+        .then(result => {
+            if(null != result)
+                return res.status(200).json({ message: 'Updated Notification Token', notification: true });
+        })
+        .catch(err => {
+            return res.status(500).json({ message: err });
+        })
+});
+
+app.post('/notificationsUnSub', (req, res) => {
+    const user = req.body.user;
+    console.info(`Unsubscribe to Notification for User >> ${user}`);
+
+    //Update the user with the Subscription
+    updateUserSubSQL( [ false, '', user ] )
+        .then(result => {
+            if(null != result)
+                return res.status(200).json({ message: 'Updated Notification Token', notification: false });
+        })
+        .catch(err => {
+            return res.status(500).json({ message: err });
+        })
+});
+
+//--------------------------------------END USER NOTIFICATIONS SUBSCRIPTION-----------------------------------------------------
+
+//---------------------------------START Reminders Pooling-------------------------------------------------------------------
 
 const REMINDER_TYPE_WATER = 1;
 const REMINDER_TYPE_BREAKFAST = 2;
@@ -192,14 +151,14 @@ const REMINDER_TYPE_EXERCISE = 5;
 const REMINDER_TYPE_SLEEP = 6;
 
 //Get all the user info
-const SQL_GET_ALL_USER = "SELECT user_id, name, email, reward_pts, notification, notification_token from user";
+const SQL_GET_ALL_USER = "SELECT user_id, name, email, rewards_pts, notification, notification_token from user";
 const getAllUser = makeQuery(SQL_GET_ALL_USER, pool);
 
 const SQL_GET_REMINDER_TYPE = "SELECT * from reminder_type where id = ?";
 const getReminderType = makeQuery(SQL_GET_REMINDER_TYPE, pool);
 
 //Insert a Reminder to Drink Water
-const SQL_INSERT_REMINDERS = "Insert into Reminders (reminder_type_id, title, image, message, reminder_date, user_id) values ?";
+const SQL_INSERT_REMINDERS = "Insert into Reminders (reminder_type_id, title, image, message, reminder_date, user_id, rewards_pts) values ?";
 const insertReminders = makeQueryForBulkInsert(SQL_INSERT_REMINDERS, pool);
 
 let taskWaterNotification = cron.schedule('30 7-21 * * *', () => {
@@ -238,13 +197,6 @@ let taskSleepNotification = cron.schedule('0 22 * * *', () => {
 })
 taskSleepNotification.start();
 
-//TESTING PURPOSE
-// let testNotification = cron.schedule('30 58 * * * *', async () => {
-//     console.info(`Running Task every 5mins ${new Date()}`);
-//     createReminders(REMINDER_TYPE_SLEEP);
-// })
-// testNotification.start();
-
 const createReminders = (type) => {
     //Create a Reminder for all the users and send notification
     return Promise.all([getAllUser(), getReminderType([type])])
@@ -256,7 +208,6 @@ const createReminders = (type) => {
             //Set Reminder Date
             let reminderDate = new Date();
 
-            console.info(type);
             switch(type) {
                 case REMINDER_TYPE_WATER: 
                     reminderDate.setMinutes('30', '00', '00');
@@ -271,7 +222,7 @@ const createReminders = (type) => {
             let values = [];
             for(let u of user)
             {
-                let v = [ reminderType.id, reminderType.title, reminderType.image, reminderType.message, reminderDate, u.user_id ];
+                let v = [ reminderType.id, reminderType.title, reminderType.image, reminderType.message, reminderDate, u.user_id, reminderType.rewards_pts ];
                 values.push(v);
             }
             return Promise.all([insertReminders(values), Promise.resolve(user), Promise.resolve(reminderType)]);
@@ -324,107 +275,18 @@ const getNotificationPayLoad = (reminderType, user) => {
     return payload;
 }
 
+//--------------------------------------End Reminder Pooling -----------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------------------------
-
-//--------------------------------------START USER NOTIFICATIONS-----------------------------------------------------
-
-//Update the user with the Sub
-const SQL_UPDATE_USER_SUB = "Update user set notification = ?, notification_token = ? where user_id = ?";
-const updateUserSubSQL = makeQuery(SQL_UPDATE_USER_SUB, pool);
-
-//webPush.setVapidDetails('127.0.0.1:8080', publicVapidKey, privateVapidKey);
-app.post('/notificationsSub', (req, res) => {
-    const token = req.body.token;
-    const user = req.body.user;
-    console.info(`Notification Token received >> ${token} for User >> ${user}`);
-
-    //Update the user with the Subscription
-    updateUserSubSQL( [ true, token, user ] )
-        .then(result => {
-            if(null != result)
-                return res.status(200).json({ message: 'Updated Notification Token', notification: true });
-        })
-        .catch(err => {
-            return res.status(500).json({ message: err });
-        })
-});
-
-app.post('/notificationsUnSub', (req, res) => {
-    const user = req.body.user;
-    console.info(`Unsubscribe to Notification for User >> ${user}`);
-
-    //Update the user with the Subscription
-    updateUserSubSQL( [ false, '', user ] )
-        .then(result => {
-            if(null != result)
-                return res.status(200).json({ message: 'Updated Notification Token', notification: false });
-        })
-        .catch(err => {
-            return res.status(500).json({ message: err });
-        })
-});
-
-app.get('/getNotification', (req, res) => {
-    getUserInfo( [ 'nyh' ])
-        .then(results => {
-            console.info(results);
-            res.status(201).json({});
-            const payload = JSON.stringify({
-                notification: {
-                title: 'Notifications are cool',
-                body: 'Know how to send notifications through Angular with this article!',
-                icon: 'https://nyh.sfo2.digitaloceanspaces.com/images/water-reminder.png',
-                vibrate: [100, 50, 100],
-                data: {
-                    url: 'https://medium.com/@arjenbrandenburgh/angulars-pwa-swpush-and-swupdate-15a7e5c154ac'
-                    }
-                },
-                to: 'fqO9z0mrYY-cvoHLplPxSv:APA91bH1nMehSfGvrPUIz_WPW8oKNstpymm9uVQHdqcK5gbb1hq3-6f7F9zdWeq7QxhS2-_OqC8If8dwfl7zcJfKP-mV7n7UN-eW6c03QaTlKsNWFt8Tud6D-e6GUSlqE_DY0m3_LLjG'
-            });
-            fetch('https://fcm.googleapis.com/fcm/send', {
-                method: 'post',
-                body: payload,
-                headers : { 'Authorization': 'key=AAAA9MKvjkU:APA91bFrLYe8uBli6w0IB-l3pYXWjuOOMq8Y2xHgxy5yzkE9D3zEMV0ApXzRJqbRDIzd_jYOLxw3FEVj_npO3N5pBBV_UITs3BlVhPbTrmOgd3W5Mlm-b9VDKDEq_P62dRcE7-e7QQM2',
-                    'Content-Type': 'application/json'
-                },
-            })
-            .then(res => res)
-            .then(json => console.log(json));
-        })
-})
-
-//---------------------------END NOTIFICATION-----------------------------------------------------------
-
-//---------------------------User Sign Up---------------------------------------------------------------
-
-const SQL_INSERT_USER = "Insert Into User (user_id, name, password, email) values (?, ? ,sha(?), ?)";
-const insertUser = makeQuery(SQL_INSERT_USER, pool);
-
-app.post('/signup', (req, res) => {
-    const user = req.body;
-
-    insertUser([ user.user_id, user.name, user.password, user.email])
-        .then(results => {
-            sendEmail(user.email, 'Register');
-            return res.status(201).json({ message: "User Created Successfully"})
-            
-        })
-        .catch(error => {
-            return res.status(500).type('application/json').json({ message: 'Error During Signing up.'})
-        })
-})
-
-//---------------------------------Handle Reminders----------------------------------------------------
+//---------------------------------Handle Reminders Request----------------------------------------------------
 
 const REMINDER_STATUS_UNDONE = 0;
 const REMINDER_STATUS_COMPLETED = 1;
 
-const SQL_GET_USER_REMINDERS = "SELECT * from Reminders where user_id = ? order by reminder_date desc";
+const SQL_GET_USER_REMINDERS = "SELECT * from Reminders where user_id = ? and DATE(reminder_date) > DATE_SUB(CURDATE(), INTERVAL 2 DAY) order by reminder_date desc";
 const getUserReminders = makeQuery(SQL_GET_USER_REMINDERS, pool);
 
-app.get('/getReminders', (req, res) => {
-    console.info('res query', req.query);
+//Only Get Up to 2 Days of Record.
+app.get('/getReminders', verifyJwtToken, (req, res) => {
     const user_id = req.query.user_id;
 
     getUserReminders([user_id])
@@ -433,35 +295,272 @@ app.get('/getReminders', (req, res) => {
         })
 })
 
-// 1. image 2. message 3. status where 4. user_id 5. id
-const SQL_UPDATE_USER_REMINDER = "UPDATE Reminders set image = ?, message = ?, status = ? where user_id = ? and id = ?"
-const updateUserReminder = makeQuery(SQL_UPDATE_USER_REMINDER, pool);
+const SQL_GET_USER_REMINDERS_HISTORY = "SELECT * from Reminders where user_id = ? and status = 1 order by completed_date desc";
+const getUserRemindersHistory = makeQuery(SQL_GET_USER_REMINDERS_HISTORY, pool);
 
-app.post('/completeReminder', (req, res) => {
-    const r = req.body.reminder;
+//Only Get Up to 2 Days of Record.
+app.get('/getRemindersHistory', (req, res) => {
+    console.info('res query', req.query);
+    const user_id = req.query.user_id;
 
-    updateUserReminder([r.image, r.message, REMINDER_STATUS_COMPLETED, r.user_id, r.id])
+    getUserRemindersHistory([user_id])
         .then(results => {
-            if(results.affectedRows == 0)
-                return res.status(409).type('application/json').json({ message: 'Reminder not found. 0 Record Updated'})
-            else
-                return res.status(200).type('application/json').json({ message: 'Reminder Updated'});
+            res.status(200).json(results);
+        })
+})
+
+const SQL_GET_RECOMMENDED_MEAL_BY_REMINDER_ID = "Select m.image, m.message from meals m, reminders r where r.reminder_type_id = m.reminder_type_id and r.id = ?";
+const getRecommendedMealByRId = makeQuery(SQL_GET_RECOMMENDED_MEAL_BY_REMINDER_ID, pool);
+
+//GET /recommendMeal/:rId 
+app.get('/recommendMeal/:rId', (req, res) => {
+    const reminder_id = req.params['rId'];
+
+    //Get Recommended Meals
+    getRecommendedMealByRId([ reminder_id ])
+        .then(results => {
+            if(results.length != 0)
+            {
+                let recommendedMeal = results[Math.floor(Math.random() * results.length)];
+                return res.status(200).json( { recommendedMeal } )
+            }
+            else{
+                return res.status(404).type('application/json').json({ message: 'No Meals to recommend'});
+            }
         })
         .catch(err => {
-            return res.status(500).type('application/json').json({ message: err.message })
+            return res.status(500).type('application/json').json({ message: 'Error during recommending meal'});
         })
 })
 
+// 1. image 2. message 3. status 4. s3_image_key 5. completed_date where 6. user_id 7. id
+const SQL_UPDATE_USER_REMINDER = "UPDATE Reminders set image = ?, message = ?, status = ?, s3_image_key = ?, completed_date = ? where user_id = ? and id = ?"
+const updateUserReminder = makeQuery(SQL_UPDATE_USER_REMINDER, pool);
 
-//-------------------------SEND EMAIL-------------------------------------------------------------------
-app.get('/sendMail', (req, res) => {
-    sendEmail('ylyc2021@gmail.com', 'Register')
+// 1. image 2. message 3. status 4. s3_image_key where 5. user_id 6. id
+const SQL_UPDATE_ADD_USER_REWARDS_PTS = "UPDATE user set rewards_pts = rewards_pts + ? where user_id = ?"
+
+app.post('/completeReminder', upload.single('image-file'), async (req, res) => {
+    const r = req.body;  
+    const f = req.file;
+    // console.info(r);
+    // console.info(f);  
+
+    const conn = await pool.getConnection();
+
+    try
+    {
+        await conn.beginTransaction;
+
+        if(!f)
+        {
+            let rResults = await conn.query(SQL_UPDATE_USER_REMINDER, [r.image, r.message, REMINDER_STATUS_COMPLETED, '', new Date(), r.user_id, r.id]);
+            console.info('Reminder Results>>>>', rResults);
+
+            if(rResults.affectedRows == 0)
+            {
+                console.info('throwing reminder not updated error');
+                throw new Error('Reminder not updated');
+            }  
+
+            let uResults = await conn.query(SQL_UPDATE_ADD_USER_REWARDS_PTS, [parseInt(r.rewards_pts), r.user_id]);
+            console.info('uResults Results>>>>', uResults);
+
+            if(uResults.affectedRows == 0)
+                throw new Error('User Rewards Pts not Updated');
+
+            conn.commit();
+
+            return res.status(200).type('application/json').json({ message: 'Reminder Updated'});
+
+            // updateUserReminder([r.image, r.message, REMINDER_STATUS_COMPLETED, '', r.user_id, r.id])
+            // .then(results => {
+            //     if(results.affectedRows == 0)
+            //         return res.status(409).type('application/json').json({ message: 'Reminder not found. 0 Record Updated'})
+            //     else
+            //         return res.status(200).type('application/json').json({ message: 'Reminder Updated'});
+            // })
+            // .catch(err => {
+            //     return res.status(500).type('application/json').json({ message: err.message })
+            // })
+        }
+        else{
+
+            let buff = await readFile(req.file.path);
+
+            let s3PutObjResults = await s3PutObject(req.file, buff, s3);
+
+            let rResults = await conn.query(SQL_UPDATE_USER_REMINDER, [s3PutObjResults.Location, r.message, REMINDER_STATUS_COMPLETED, s3PutObjResults.key, new Date(), r.user_id, r.id]);
+
+            if(rResults.affectedRows == 0) {
+                await s3RemoveObject(s3PutObjResults.key, s3);
+                throw new Error('Reminder not updated');
+            }
+
+            console.info(console.info(parseInt(r.rewards_pts)));
+            let uResults = await conn.query(SQL_UPDATE_ADD_USER_REWARDS_PTS, [parseInt(r.rewards_pts), r.user_id]);
+
+            if(uResults.affectedRows == 0) {
+                await s3RemoveObject(s3PutObjResults.key, s3);
+                throw new Error('User Rewards Pts not Updated');
+            }
+
+            conn.commit();
+
+            res.on('finish', () => {
+                //delete the tmp file
+                fs.unlink(req.file.path, () => {})
+            })
+
+            return res.status(200).type('application/json').json({ message: 'Reminder Updated to S3' })
+
+            //Read File
+            // readFile(req.file.path)
+            //     .then(buff => s3PutObject(req.file, buff, s3))
+            //     .then(result => {
+            //         //Update DB with Key and the New URL.
+            //         return updateUserReminder([result.Location, r.message, REMINDER_STATUS_COMPLETED, result.key, r.user_id, r.id])
+            //             .then(sqlResults => {
+            //                 if(sqlResults.affectedRows == 0) {
+            //                     //Delete from S3.
+            //                     s3RemoveObject(result.key, s3)
+            //                     .then(r => {
+            //                         return false;
+            //                     })
+            //                 }
+            //                 return true;
+            //             })
+
+            //     })
+            //     .then(results => {
+            //         console.info(results);
+            //         if(results)
+            //         {
+            //             res.on('finish', () => {
+            //                 //delete the tmp file
+            //                 fs.unlink(req.file.path, () => {})
+            //             })
+            //             return res.status(200).type('application/json').json({ message: 'Reminder Updated to S3' })
+            //         }
+            //     })
+        }
+    }
+    catch(err) {
+        conn.rollback();
+        console.error('Error Completing Reminder>>>', err);
+        return res.status(500).type('application/json').json({ message: err.message })
+    }
+    finally{
+        conn.release();
+    }
+})
+
+//------------------------- GET Weather Forecast-------------------------------------------------------------
+app.get('/getWeatherForecast', verifyJwtToken, (req, res) => {
+
+    const dt = new Date();
+    const dateFormat = `${dt.getFullYear().toString().padStart(4, '0')}-${(dt.getMonth()+1).toString().padStart(2, '0')}-${dt.getDate().toString().padStart(2, '0')}T${dt.getHours().toString().padStart(2, '0')}:${dt.getMinutes().toString().padStart(2, '0')}:${dt.getSeconds().toString().padStart(2, '0')}`;
+    const weather_base_url = "https://api.data.gov.sg/v1/environment/2-hour-weather-forecast";
+
+    //Fetch from https://data.gov.sg/dataset/weather-forecast
+    console.info(dateFormat);
+
+    const url = withQuery(weather_base_url, {
+        date_time: dateFormat
+    })
+
+    fetch(url)
+        .then(res => res.json())
         .then(results => {
-            console.info('Email Sent.....', results);
-            return res.status(200).json({message: 'Email sent'});
+            const weatherForecast = {
+                start_date: results.items[0].valid_period.start,
+                end_date: results.items[0].valid_period.end,
+                forecast: []
+            }
+
+            for(let w of results.items[0].forecasts)
+            {
+                weatherForecast.forecast.push(w);
+            }
+            console.info('Weather Forecast>>>>>' ,weatherForecast);
+            return res.status(200).type('application/json').json({ weatherForecast })
         })
-        .catch(error => console.error('Error during sending Email', error.message));
+        .catch(err => {
+            console.info(err.message);
+        })
 })
 
-//------------------------Telegram Bot-------------------------------------------------------------------
-bot.launch();
+//------------------- Redeem Rewards ------------------------------------------------------
+const SQL_UPDATE_SUBTRACT_USER_REWARDS_PTS = "Update user set rewards_pts = rewards_pts - ? where user_id = ?";
+const subtractUserRewardsPts = makeQuery(SQL_UPDATE_SUBTRACT_USER_REWARDS_PTS, pool);
+
+app.post('/redeemRewards', verifyJwtToken, (req, res) => {
+
+    const randomJoke_url = "https://v2.jokeapi.dev/joke/Any?type=single";
+
+    const type = req.body.type;
+    const user_id = req.body.user_id;
+
+    return getUserInfo([ user_id ])
+        .then(results => {
+            if( (parseInt(results[0].rewards_pts) - 1) < 0) {
+                res.status(409).type('application/json').json({ message: "Not enough points"});
+                throw new Error('Not enough points');
+            }
+            else 
+                return subtractUserRewardsPts([ 1, user_id]);
+        })
+        .then(results => {
+            if(results.affectedRows == 0) {
+                res.status(500).type('application/json').json({ message: "Unable to update user"});
+                throw new Error('Unable to update user');
+            }
+            return;
+        })
+        .then(results => {
+            switch (type) {
+                case 'jokes' : {
+                    fetch(randomJoke_url)
+                    .then(res => res.json())
+                    .then(results => {
+                        console.info(results.joke);
+                        return res.status(200).type('application/json').json({ joke: results.joke })
+                    })
+                    .catch(err => {
+                        console.error('Error during sending Redeeming Jokes', err.message)
+                        return res.status(500).json({ error: 'Error when Redeeming Jokes >>>>' +  err.message})
+                    })
+                }
+                break;
+                default: 
+                    return res.status(404).json({ message: 'No Reward Type Found'});
+                break;
+            }
+            return;
+        })
+        .catch(err => {
+            console.info('Error Occurred', err.message);
+        })
+})
+
+app.use(express.static(__dirname + '/public'));
+
+//Start Express
+pool.getConnection()
+    .then(conn => {
+        let p0 = Promise.resolve(conn);
+        let p1 = conn.ping;
+        return Promise.all( [ p0, p1 ]);
+    })
+    .then(results => {
+        //Start Express
+        app.listen(PORT, ()=> {
+            console.info(`Server Started on PORT ${PORT} at ${new Date()}`);
+        })
+
+        let conn = results[0];
+        conn.release();
+    })
+    .catch(error => {
+        console.error('Error Occurred: ', error);
+    })

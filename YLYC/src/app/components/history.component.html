@@ -1,0 +1,27 @@
+<app-header></app-header>
+<div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+          <table class="table table-image">
+            <thead>
+              <tr>
+                <th scope="col">Completed Date</th>
+                <th scope="col">Image</th>
+                <th scope="col">Message</th>
+                <th scope="col">Rewards Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rH of remindersHistory">
+                <th scope="row">{{rH.completed_date | date:'medium'}}</th>
+                <td class="w-25">
+                    <img src="{{rH.image}}" class="img-fluid img-thumbnail w-40" alt="reminder_image">
+                </td>
+                <td>{{rH.message}}</td>
+                <td>+{{rH.rewards_pts}}</td>
+              </tr>
+            </tbody>
+          </table>   
+      </div>
+    </div>
+  </div>

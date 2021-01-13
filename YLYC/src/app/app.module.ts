@@ -8,20 +8,28 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { LoginComponent } from './components/login.component';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthService } from './auth.service';
+import { AuthService } from './services/auth.service';
 import { HeaderComponent } from './header/header.component';
 import { MainComponent } from './components/main.component';
-import { WebNotificationService } from './web.notification.service';
+import { WebNotificationService } from './services/web.notification.service';
 import { AngularFireModule } from '@angular/fire';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
 import { SignupComponent } from './components/signup.component';
 import { CustomvalidationService } from './services/customvalidation.service';
 import { BackendService } from './services/backend.service';
+import { WebcamModule } from 'ngx-webcam';
+import { CaptureImageComponent } from './components/capture-image.component'
+import { CameraService } from './services/camera.services';
+import { HistoryComponent } from './components/history.component';
+import { RedeemComponent } from './components/redeem.component';
 
 const ROUTES: Routes = [
   { path: '', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
-  { path: 'main', component: MainComponent },
+  { path: 'main', component: MainComponent, canActivate: [AuthService] },
+  { path: 'history', component: HistoryComponent , canActivate: [AuthService]},
+  { path: 'redeem', component: RedeemComponent , canActivate: [AuthService]},
+  { path: 'capture/:rId', component: CaptureImageComponent ,canActivate: [AuthService] },
   { path: '**', redirectTo: '/', pathMatch: 'full' }
 ]
 
@@ -31,7 +39,10 @@ const ROUTES: Routes = [
     LoginComponent,
     HeaderComponent,
     MainComponent,
-    SignupComponent
+    SignupComponent,
+    CaptureImageComponent,
+    HistoryComponent,
+    RedeemComponent
   ],
   imports: [
     BrowserModule,
@@ -39,11 +50,12 @@ const ROUTES: Routes = [
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    RouterModule.forRoot(ROUTES),
+    RouterModule.forRoot(ROUTES, { useHash: true }),
     AngularFireModule.initializeApp(environment.firebaseConfig),
-    AngularFireMessagingModule
+    AngularFireMessagingModule,
+    WebcamModule
   ],
-  providers: [AuthService, WebNotificationService, CustomvalidationService, BackendService],
+  providers: [AuthService, WebNotificationService, CustomvalidationService, BackendService, CameraService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

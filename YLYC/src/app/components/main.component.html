@@ -1,6 +1,4 @@
 <app-header></app-header>  
-
-
 <div class="accordion" id="accordionExample">
   <div class="accordion-item">
     <h2 class="accordion-header" id="headingOne">
@@ -18,10 +16,14 @@
                   </div>
                   <div class="card-body">
                     <h5 class="card-title">{{r.title}}</h5>
-                    <img src="{{r.image}}" alt="" width="50%">
-                    <p class="card-text">{{r.message}}</p>
-                    <button (click)="completeReminder(i)" class="btn btn-primary" [disabled]="r.status == 1">Complete</button>
-                  </div>
+                    <img src="{{r.image}}" alt="" width="60%">
+                    <div class="d-flex justify-content-center">
+                      <p class="card-text">{{r.message}}</p>
+                    </div>
+                    <button (click)="getWeatherForecast()" *ngIf="r.reminder_type_id == 5" data-bs-toggle="modal" data-bs-target="#staticBackdrop" class="btn btn-info btn-sm btn-radius" [disabled]="r.status == 1"><i class="fas fa-cloud fa-lg"></i></button>
+                    <button (click)="captureImage(r)" *ngIf="r.reminder_type_id == 2 || r.reminder_type_id == 3 || r.reminder_type_id == 4" class="btn btn-primary btn-sm btn-radius" [disabled]="r.status == 1" ><i class="fas fa-camera fa-lg"></i></button>
+                    <button (click)="suggestMeal(r)" *ngIf="r.reminder_type_id == 2 || r.reminder_type_id == 3 || r.reminder_type_id == 4" class="btn btn-info btn-sm btn-radius" [disabled]="r.status == 1" ><i class="fas fa-utensils fa-lg"></i></button>
+                    <button (click)="completeReminder(i)" class="btn btn-success btn-sm btn-radius" [disabled]="r.status == 1"><i class="fas fa-check"></i></button>                  </div>
                   <div class="card-footer text-muted">
                     {{r.timelapsed}}
                   </div>
@@ -41,15 +43,19 @@
       <div class="accordion-body">
         <div class="container-fluid mt-1" >
           <div class="d-flex flex-wrap justify-content-center" *ngIf="oldReminders.length != 0">
-              <div class="card text-center" *ngFor="let r of oldReminders" [ngClass]="{'bg-complete': r.status == 1, 'bg-expired': r.status == 0 }">
+              <div class="card text-center" *ngFor="let r of oldReminders" [ngClass]="{'bg-completed': r.status == 1, 'bg-expired': r.status == 0 }">
                   <div class="card-header">
                     Remember To
                   </div>
                   <div class="card-body">
                     <h5 class="card-title">{{r.title}}</h5>
-                    <img src="{{r.image}}" alt="" width="50%">
-                    <p class="card-text">{{r.message}}</p>
-                    <button class="btn btn-primary" disabled>Complete</button>
+                    <img src="{{r.image}}" alt="" width="60%">
+                    <div class="d-flex justify-content-center">
+                      <p class="card-text">{{r.message}}</p>
+                    </div>
+                    <!-- <button (click)="captureImage(r)" class="btn btn-primary btn-sm btn-radius" [disabled]="r.status == 1" ><i class="fas fa-camera fa-lg"></i></button>
+                    <button (click)="suggestMeal(r)" class="btn btn-info btn-sm btn-radius" [disabled]="r.status == 1" ><i class="fas fa-utensils fa-lg"></i></button>
+                    <button (click)="completeReminder(i)" class="btn btn-success btn-sm btn-radius" [disabled]="r.status == 1"><i class="fas fa-check"></i></button> -->
                   </div>
                   <div class="card-footer text-muted">
                     {{r.timelapsed}}
@@ -57,6 +63,37 @@
               </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Weather Forecast <br> {{ weatherForecast.start_date | date:'medium' }} to {{ weatherForecast.end_date | date:'medium' }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Area</th>
+              <th scope="col">Forecast</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let wF of weatherForecast.forecast">
+              <td>{{wF.area}}</td>
+              <td>{{wF.forecast}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

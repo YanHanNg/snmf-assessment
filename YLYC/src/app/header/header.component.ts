@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 import { SwPush } from '@angular/service-worker';
-import { WebNotificationService } from '../web.notification.service';
+import { WebNotificationService } from '../services/web.notification.service';
 
 @Component({
   selector: 'app-header',
@@ -23,7 +23,6 @@ export class HeaderComponent implements OnInit {
   }
 
   toggleNotifcation() {
-    // if(this.notification === "Disabled")
     if(!this.notification)
       this.webNotificationService.subscribeToNotification(this.authSvc.getUser().user_id);
     else
@@ -35,8 +34,7 @@ export class HeaderComponent implements OnInit {
     this.webNotificationService.subscribeToNotification(this.authSvc.getUser().user_id);
   }
 
-  getNotification() {
-    this.webNotificationService.getNotification()
-      .then(results => results);
+  logout() {
+    this.authSvc.logout();
   }
 }

@@ -1,0 +1,50 @@
+<div class="container-fluid">
+    <div class="card text-center mt-3">
+        <div class="card-header">
+            <i class="fa fa-camera-retro"></i> Capture Your Meal <i class="fas fa-utensils"></i>
+        </div>
+        <div class="card-body" *ngIf="!webcamImage">
+            <webcam [height]="500" [width]="500" [trigger]="triggerObservable" (imageCapture)="handleImage($event)"
+                [allowCameraSwitch]="allowCameraSwitch"
+                [videoOptions]="videoOptions"
+                [imageQuality]="1"
+                (cameraSwitched)="cameraWasSwitched($event)"
+                (initError)="handleInitError($event)">
+            </webcam>
+            <div class="d-flex justify-content-center">
+                <button type="button" class="btn btn-labeled btn-dark" (click)="back()">
+                    <span class="btn-label"><i class="fa fa-chevron-left" ></i></span>Return
+                </button>
+                <button type="button" class="btn btn-labeled btn-primary" (click)="triggerSnapshot()">
+                    <span class="btn-label"><i class="fa fa-camera"></i></span>Capture
+                </button>
+                <button type="button" class="btn btn-labeled btn-info" (click)="showNextWebcam(true);" [disabled]="!multipleWebcamsAvailable">
+                    <span class="btn-label"><i class="fa fa-refresh"></i></span>Switch
+                </button>
+            </div>
+        </div>
+        <div class="card-body" *ngIf="webcamImage">
+            <img [src]="webcamImage.imageAsDataUrl" [height]="375" [width]="500"/>
+            <div class="d-flex justify-content-center">
+                <div class="input-group mb-3 w-75 mt-2">
+                    <span class="input-group-text" id="basic-addon3">Description</span>
+                    <input type="text" class="form-control" id="message" [(ngModel)]="message">
+                </div>
+            </div>
+            <div class="d-flex justify-content-center">
+                <button type="button" class="btn btn-labeled btn-dark" (click)="back()">
+                    <span class="btn-label"><i class="fa fa-chevron-left"></i></span>Return
+                </button>
+                <button type="button" class="btn btn-labeled btn-primary" (click)="tryAgain()">
+                    <span class="btn-label"><i class="fa fa-camera"></i></span>Retry
+                </button>
+                <button type="button" class="btn btn-labeled btn-success" (click)="saveImage();" [disabled]="!message">
+                    <span class="btn-label"><i class="fa fa-check"></i></span>Save Image
+                </button>
+            </div>
+        </div>
+    <h4 *ngIf="errors.length > 0">Messages:</h4>
+    <ul *ngFor="let error of errors">
+        <li>{{error | json}}</li>
+    </ul>    
+</div>
