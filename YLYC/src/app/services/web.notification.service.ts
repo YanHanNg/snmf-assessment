@@ -34,7 +34,8 @@ export class WebNotificationService {
             .subscribe(
             (token) => { // USER-REQUESTED-TOKEN
                 console.log('Permission granted! Save to the server!', token);
-                this.mapTokenToUser(token, user)
+                if(token!=null)
+                    this.mapTokenToUser(token, user)
             },
             (error) => {
                 console.error(error);

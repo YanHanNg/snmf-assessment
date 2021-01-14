@@ -10,7 +10,7 @@
       <!-- Login Form -->
       <form [formGroup]="form">
         <input type="text" id="login" class="fadeIn second" name="login" formControlName="user_id" placeholder="User Id">
-        <input type="text" id="password" class="fadeIn third" name="login" formControlName="password" placeholder="Password">
+        <input type="password" id="password" class="fadeIn third" name="login" formControlName="password" placeholder="Password">
         <input type="submit" class="fadeIn fourth" value="Log In" (click)="performLogin()">
       </form>
   
