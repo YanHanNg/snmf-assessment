@@ -116,8 +116,10 @@ app.post('/notificationsSub', verifyJwtToken, (req, res) => {
     //Update the user with the Subscription
     updateUserSubSQL( [ true, token, user ] )
         .then(result => {
-            if(null != result)
+            if(result.affectedRows != 0)
                 return res.status(200).json({ message: 'Updated Notification Token', notification: true });
+            else
+                return res.status(404).json({ message: 'Updated Notification Token for the user unsuccessful' });
         })
         .catch(err => {
             return res.status(500).json({ message: err });
@@ -131,8 +133,10 @@ app.post('/notificationsUnSub', verifyJwtToken, (req, res) => {
     //Update the user with the Subscription
     updateUserSubSQL( [ false, '', user ] )
         .then(result => {
-            if(null != result)
+            if(result.affectedRows != 0)
                 return res.status(200).json({ message: 'Updated Notification Token', notification: false });
+            else
+                return res.status(404).json({ message: 'Updated Notification Token for the user unsuccessful' });
         })
         .catch(err => {
             return res.status(500).json({ message: err });
@@ -263,7 +267,7 @@ const createReminders = (type) => {
 
         })
         .catch(err => {
-            console.error("Error Occured During Inserting Reminders", err);
+            console.error("Error Occured During Inserting Reminders>>>>>", err);
         })
 }
 
@@ -299,6 +303,9 @@ app.get('/getReminders', verifyJwtToken, (req, res) => {
         .then(results => {
             res.status(200).json(results);
         })
+        .catch(err => {
+            return res.status(500).type('application/json').json({ message: 'Error getting Reminder >>>' + err.message});
+        })
 })
 
 const SQL_GET_USER_REMINDERS_HISTORY = "SELECT * from reminders where user_id = ? and status = 1 order by completed_date desc";
@@ -312,6 +319,9 @@ app.get('/getRemindersHistory', verifyJwtToken, (req, res) => {
     getUserRemindersHistory([user_id])
         .then(results => {
             res.status(200).json(results);
+        })
+        .catch(err => {
+            return res.status(500).type('application/json').json({ message: 'Error getting Reminder History>>>' + err.message});
         })
 })
 
