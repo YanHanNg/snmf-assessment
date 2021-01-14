@@ -159,9 +159,8 @@ export class MainComponent implements OnInit {
   }
 
   togglePanel() {
-    //If Either is Active Trigger a Refresh
-    if(this.panel1.nativeElement.classList.toggle("active") || this.panel2.nativeElement.classList.toggle("active"))
-      this.refreshReminders();
+    if(this.panel1.nativeElement.classList.contains("active") || this.panel2.nativeElement.classList.contains("active"))
+        this.refreshReminders();
   }
 
   getWeatherForecast() {

@@ -7,21 +7,24 @@ import { User } from '../model/model';
 
 @Injectable()
 export class AuthService implements CanActivate {
-    private token = '';
+    private token = localStorage.getItem('ylycToken');
     public notificationEnabled$ = new BehaviorSubject(false);
     public rewards_pts$ = new BehaviorSubject(0);
-    private user: User;
+    private user: User = JSON.parse(localStorage.getItem('ylycUser'));
 
     constructor(private http: HttpClient, private router: Router) { }
 
     login(username, password): Promise<boolean> {
         this.token = '';
+        localStorage.setItem('ylycToken', '');
         return this.http.post<any>('/login', { username, password } , { observe: 'response' })
             .toPromise()
             .then(resp => {
                 if(resp.status == 200) {
                     this.token = resp.body.token;
+                    localStorage.setItem('ylycToken', this.token);
                     this.user = resp.body.user.user;
+                    localStorage.setItem('ylycUser', JSON.stringify(this.user));
                     this.notificationEnabled$.next(resp.body.user.user.notification === 0 ? false : true)
                     this.rewards_pts$.next(resp.body.user.user.rewards_pts);
                 }
@@ -74,6 +77,8 @@ export class AuthService implements CanActivate {
 
     logout() {
         console.info('Auth Service Logout Called');
+        localStorage.setItem('ylycUser', '');
+        localStorage.setItem('ylycToken', '');
         this.user = null;
         this.token = null;
         this.router.navigate(['/'])
