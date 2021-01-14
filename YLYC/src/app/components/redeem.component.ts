@@ -28,12 +28,6 @@ export class RedeemComponent implements OnInit {
           //call get UserInfo to Update the Points
           this.authSvc.getUserInfo();
         }
-      },
-      err => {
-        if(err.status == 409)
-          this.jokeMessage = err.error.message;
-        else if(err.status == 403)
-          this.authSvc.logout();
       });
   }
 

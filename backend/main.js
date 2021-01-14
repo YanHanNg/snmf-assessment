@@ -30,7 +30,7 @@ const { } = require('./schedule-task.js');
 const { s3PutObject, s3RemoveObject, upload, readFile, s3, fs } = require('./s3.js');
 
 const app = express();
-const PORT = process.env.APP_PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 //Morgan
 app.use(morgan('combined'));
@@ -70,7 +70,7 @@ app.post('/login',
     })
 
 
-app.post('/getUserInfo', (req, res) => {
+app.post('/getUserInfo', verifyJwtToken, (req, res) => {
     const user_id = req.body.user_id;
 
     getUserInfo([ user_id ])
@@ -84,7 +84,7 @@ app.post('/getUserInfo', (req, res) => {
 
 //---------------------------User Sign Up---------------------------------------------------------------
 
-const SQL_INSERT_USER = "Insert Into User (user_id, name, password, email) values (?, ? ,sha(?), ?)";
+const SQL_INSERT_USER = "Insert Into user (user_id, name, password, email) values (?, ? ,sha(?), ?)";
 const insertUser = makeQuery(SQL_INSERT_USER, pool);
 
 app.post('/signup', (req, res) => {
@@ -108,7 +108,7 @@ const SQL_UPDATE_USER_SUB = "Update user set notification = ?, notification_toke
 const updateUserSubSQL = makeQuery(SQL_UPDATE_USER_SUB, pool);
 
 //webPush.setVapidDetails('127.0.0.1:8080', publicVapidKey, privateVapidKey);
-app.post('/notificationsSub', (req, res) => {
+app.post('/notificationsSub', verifyJwtToken, (req, res) => {
     const token = req.body.token;
     const user = req.body.user;
     console.info(`Notification Token received >> ${token} for User >> ${user}`);
@@ -124,7 +124,7 @@ app.post('/notificationsSub', (req, res) => {
         })
 });
 
-app.post('/notificationsUnSub', (req, res) => {
+app.post('/notificationsUnSub', verifyJwtToken, (req, res) => {
     const user = req.body.user;
     console.info(`Unsubscribe to Notification for User >> ${user}`);
 
@@ -158,7 +158,7 @@ const SQL_GET_REMINDER_TYPE = "SELECT * from reminder_type where id = ?";
 const getReminderType = makeQuery(SQL_GET_REMINDER_TYPE, pool);
 
 //Insert a Reminder to Drink Water
-const SQL_INSERT_REMINDERS = "Insert into Reminders (reminder_type_id, title, image, message, reminder_date, user_id, rewards_pts) values ?";
+const SQL_INSERT_REMINDERS = "Insert into reminders (reminder_type_id, title, image, message, reminder_date, user_id, rewards_pts) values ?";
 const insertReminders = makeQueryForBulkInsert(SQL_INSERT_REMINDERS, pool);
 
 let taskWaterNotification = cron.schedule('30 7-21 * * *', () => {
@@ -196,6 +196,12 @@ let taskSleepNotification = cron.schedule('0 22 * * *', () => {
     createReminders(REMINDER_TYPE_SLEEP);
 })
 taskSleepNotification.start();
+
+// let testNotification = cron.schedule('30 26 * * * *', () => {
+//     console.info(`Running Task every day at 10pm ${new Date()}`);
+//     createReminders(REMINDER_TYPE_EXERCISE);
+// })
+// testNotification.start();
 
 const createReminders = (type) => {
     //Create a Reminder for all the users and send notification
@@ -282,7 +288,7 @@ const getNotificationPayLoad = (reminderType, user) => {
 const REMINDER_STATUS_UNDONE = 0;
 const REMINDER_STATUS_COMPLETED = 1;
 
-const SQL_GET_USER_REMINDERS = "SELECT * from Reminders where user_id = ? and DATE(reminder_date) > DATE_SUB(CURDATE(), INTERVAL 2 DAY) order by reminder_date desc";
+const SQL_GET_USER_REMINDERS = "SELECT * from reminders where user_id = ? and DATE(reminder_date) > DATE_SUB(CURDATE(), INTERVAL 2 DAY) order by reminder_date desc";
 const getUserReminders = makeQuery(SQL_GET_USER_REMINDERS, pool);
 
 //Only Get Up to 2 Days of Record.
@@ -295,11 +301,11 @@ app.get('/getReminders', verifyJwtToken, (req, res) => {
         })
 })
 
-const SQL_GET_USER_REMINDERS_HISTORY = "SELECT * from Reminders where user_id = ? and status = 1 order by completed_date desc";
+const SQL_GET_USER_REMINDERS_HISTORY = "SELECT * from reminders where user_id = ? and status = 1 order by completed_date desc";
 const getUserRemindersHistory = makeQuery(SQL_GET_USER_REMINDERS_HISTORY, pool);
 
 //Only Get Up to 2 Days of Record.
-app.get('/getRemindersHistory', (req, res) => {
+app.get('/getRemindersHistory', verifyJwtToken, (req, res) => {
     console.info('res query', req.query);
     const user_id = req.query.user_id;
 
@@ -313,7 +319,7 @@ const SQL_GET_RECOMMENDED_MEAL_BY_REMINDER_ID = "Select m.image, m.message from 
 const getRecommendedMealByRId = makeQuery(SQL_GET_RECOMMENDED_MEAL_BY_REMINDER_ID, pool);
 
 //GET /recommendMeal/:rId 
-app.get('/recommendMeal/:rId', (req, res) => {
+app.get('/recommendMeal/:rId', verifyJwtToken, (req, res) => {
     const reminder_id = req.params['rId'];
 
     //Get Recommended Meals
@@ -334,13 +340,13 @@ app.get('/recommendMeal/:rId', (req, res) => {
 })
 
 // 1. image 2. message 3. status 4. s3_image_key 5. completed_date where 6. user_id 7. id
-const SQL_UPDATE_USER_REMINDER = "UPDATE Reminders set image = ?, message = ?, status = ?, s3_image_key = ?, completed_date = ? where user_id = ? and id = ?"
+const SQL_UPDATE_USER_REMINDER = "UPDATE reminders set image = ?, message = ?, status = ?, s3_image_key = ?, completed_date = ? where user_id = ? and id = ?"
 const updateUserReminder = makeQuery(SQL_UPDATE_USER_REMINDER, pool);
 
 // 1. image 2. message 3. status 4. s3_image_key where 5. user_id 6. id
 const SQL_UPDATE_ADD_USER_REWARDS_PTS = "UPDATE user set rewards_pts = rewards_pts + ? where user_id = ?"
 
-app.post('/completeReminder', upload.single('image-file'), async (req, res) => {
+app.post('/completeReminder', verifyJwtToken, upload.single('image-file'), async (req, res) => {
     const r = req.body;  
     const f = req.file;
     // console.info(r);
@@ -542,6 +548,9 @@ app.post('/redeemRewards', verifyJwtToken, (req, res) => {
             console.info('Error Occurred', err.message);
         })
 })
+
+//Angular Frontend [Copy from Angular Side dist/frontend after ng build --prod]
+app.use(express.static(__dirname + '/frontend'));
 
 app.use(express.static(__dirname + '/public'));
 

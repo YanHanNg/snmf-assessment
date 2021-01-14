@@ -91,6 +91,7 @@ const verifyJwtToken = (req, res, next) => {
     }
 
     const token = terms[1];
+    console.info('Token Verified', token);
     try {
         const verified = jwt.verify(token, TOKEN_SECRET);
         console.info(`verified token: `, verified);

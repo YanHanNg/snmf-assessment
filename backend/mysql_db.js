@@ -8,6 +8,12 @@ const pool = mysql.createPool({
     user: process.env.MYSQL_USERNAME,   
     password: process.env.MYSQL_PASSWORD,   
     connectionLimit: parseInt(process.env.MYSQL_CONN_LIMIT) || 4,   
+    connectTimeout: 20000,
+    waitForConnections: true,
+    // comment out ssl if running locally. this is for connecting to digital ocean
+    // ssl: {
+    //     ca: fs.readFileSync(__dirname + '/certs/ca-certificate.crt'),
+    // },
     timezone: process.env.DB_TIMEZONE || '+08:00'   
 })
 

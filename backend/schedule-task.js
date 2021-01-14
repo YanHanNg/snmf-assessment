@@ -28,7 +28,7 @@ const REMINDER_TYPE_SLEEP = 6;
 // })
 // testNotification.start();
 
-const SQL_INSERT_BULK_INTO_MEALS = "Insert into meals (reminder_type_id, image, message) values ?";
+const SQL_INSERT_BULK_INTO_MEALS = "INSERT into meals (reminder_type_id, image, message) values ?";
 const insertIntoMeals = makeQueryForBulkInsert(SQL_INSERT_BULK_INTO_MEALS, pool);
 
 const getMeals = (reminderType) => {
@@ -92,7 +92,7 @@ const updateDBonMeals = async () => {
     try {
         await conn.beginTransaction();
 
-        await conn.query("DELETE FROM MEALS WHERE ID > 0");
+        await conn.query("DELETE from meals where id > 0");
 
         let [rB, rL, rD] = await Promise.all([getMeals(REMINDER_TYPE_BREAKFAST), getMeals(REMINDER_TYPE_LUNCH), getMeals(REMINDER_TYPE_DINNER)])
 

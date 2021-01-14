@@ -1,7 +1,8 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from "@angular/router";
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, Observable, throwError } from "rxjs";
+import { catchError } from "rxjs/operators";
 import { User } from '../model/model';
 
 @Injectable()
@@ -9,7 +10,6 @@ export class AuthService implements CanActivate {
     private token = '';
     public notificationEnabled$ = new BehaviorSubject(false);
     public rewards_pts$ = new BehaviorSubject(0);
-    private user_id: string = '';
     private user: User;
 
     constructor(private http: HttpClient, private router: Router) { }
@@ -45,8 +45,13 @@ export class AuthService implements CanActivate {
     }
 
     getUserInfo() {
-        return this.http.post('/getUserInfo', { user_id: this.user.user_id }, { observe: 'response' })
-            .pipe()
+        let headers = new HttpHeaders({
+            Authorization: 'Bearer ' + this.getAuthToken()
+        })
+        return this.http.post('/getUserInfo', { user_id: this.user.user_id }, { headers, observe: 'response' })
+            .pipe(
+                catchError(this.handleError.bind(this))
+            )
             .subscribe(resp => {
                 if(resp.status == 200)
                 {
@@ -68,9 +73,13 @@ export class AuthService implements CanActivate {
     }
 
     logout() {
+        console.info('Auth Service Logout Called');
         this.user = null;
         this.token = null;
-        this.router.navigate(['/']);
+        this.router.navigate(['/'])
+            .catch(err => [
+                console.info('error: ', err)
+            ])
     }
 
     public isNotificationEnabled(): Observable<boolean> {
@@ -80,4 +89,25 @@ export class AuthService implements CanActivate {
     public getRewardsPoints(): Observable<number> {
         return this.rewards_pts$;
     }
+
+    private handleError (error: HttpErrorResponse) {
+        if (error.error instanceof ErrorEvent) {
+            // A client-side or network error occurred. Handle it accordingly.
+            console.error('An error occurred:', error.error.message);
+        } else {
+            // The backend returned an unsuccessful response code.
+            // The response body may contain clues as to what went wrong.
+            console.error(
+                `Backend returned code ${error.status}, ` +
+                `body was: ${error.error}`);
+            if(error.status == 403) {
+                console.info('Executing logout from 403 Resp Code >>>>> ', error.error);
+                this.logout();
+            }
+                
+        }
+        // Return an observable with a user-facing error message.
+        return throwError(
+            'Something bad happened; please try again later.');
+      }
 }

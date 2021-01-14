@@ -44,13 +44,6 @@ export class MainComponent implements OnInit {
           reminder.image = res.body.recommendedMeal.image;
           reminder.message = res.body.recommendedMeal.message;
         }
-      },
-      err => {
-        if(err.status == 403)
-          this.authSvc.logout();
-        let errorMessage = "Error in getting Recommended Meals";
-        console.error(errorMessage, err);
-        reminder.message(errorMessage);
       })
   }
 
@@ -78,10 +71,6 @@ export class MainComponent implements OnInit {
         .subscribe(resp => {
             if(resp.status == 200)
               this.refreshReminders();
-        },
-        err => {
-          if(err.status == 403)
-            this.authSvc.logout();
         })
     }
     else{
@@ -89,10 +78,6 @@ export class MainComponent implements OnInit {
         .subscribe(resp => {
             if(resp.status == 200)
               this.refreshReminders();
-        },
-        err => {
-          if(err.status == 403)
-            this.authSvc.logout();
         })
     }
   }
@@ -185,10 +170,6 @@ export class MainComponent implements OnInit {
         if(resp.status == 200)
           this.weatherForecast = resp.body.weatherForecast as WeatherForecast;
         console.info(this.weatherForecast);
-      },
-      err => {
-        if(err.status == 403)
-          this.authSvc.logout();
       })
   }
 }

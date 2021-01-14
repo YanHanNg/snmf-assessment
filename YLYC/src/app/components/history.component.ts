@@ -20,10 +20,6 @@ export class HistoryComponent implements OnInit {
         if(resp.status == 200) {
           this.remindersHistory = resp.body as Reminder[];
         }
-      },
-      err => {
-        if(err.status == 403)
-          this.authSvc.logout();
       })
   }
 }

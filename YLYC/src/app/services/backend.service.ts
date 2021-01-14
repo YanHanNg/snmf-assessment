@@ -10,62 +10,76 @@ export class BackendService {
 
     constructor(private http: HttpClient, private authSvc: AuthService, private router: Router) { }
 
-    headers = new HttpHeaders({
-        Authorization: 'Bearer ' + this.authSvc.getAuthToken()
-    })
-
     userSignUp(user) : Observable<any> {
         return this.http.post('/signup', user, { observe: 'response'})
             .pipe(
-                //catchError(this.handleError)
+                catchError(this.handleError.bind(this))
             );
     }
 
     getReminders() {
+        let headers = new HttpHeaders({
+            Authorization: 'Bearer ' + this.authSvc.getAuthToken()
+        })
         let params = new HttpParams().set('user_id', this.authSvc.getUser().user_id);
-        return this.http.get('/getReminders', { params, headers: this.headers , observe: 'response' } )
+        return this.http.get('/getReminders', { params, headers, observe: 'response' } )
             .pipe(
-                // catchError(this.handleError)
+                catchError(this.handleError.bind(this))
             );
     }
 
     getRecommendedMeals(reminder_id) : Observable<any> {
-        return this.http.get(`/recommendMeal/${reminder_id}`, { headers: this.headers, observe: 'response' })
+        let headers = new HttpHeaders({
+            Authorization: 'Bearer ' + this.authSvc.getAuthToken()
+        })
+        return this.http.get(`/recommendMeal/${reminder_id}`, { headers, observe: 'response' })
             .pipe(
-                //catchError(this.handleError)
+                catchError(this.handleError.bind(this))
             );
     }
 
     getUserRemindersHistory() : Observable<any> {
+        let headers = new HttpHeaders({
+            Authorization: 'Bearer ' + this.authSvc.getAuthToken()
+        })
         let params = new HttpParams().set('user_id', this.authSvc.getUser().user_id);
-        return this.http.get('/getRemindersHistory', { params, headers: this.headers, observe: 'response'})
+        return this.http.get('/getRemindersHistory', { params, headers, observe: 'response'})
             .pipe(
-                //catchError(this.handleError)
+                catchError(this.handleError.bind(this))
             );
     }
 
     updateReminderComplete(reminder) : Observable<any> {
-        return this.http.post('/completeReminder', reminder , { headers: this.headers, observe: 'response' })
+        let headers = new HttpHeaders({
+            Authorization: 'Bearer ' + this.authSvc.getAuthToken()
+        })
+        return this.http.post('/completeReminder', reminder , { headers, observe: 'response' })
             .pipe(
-                // catchError(this.handleError)
+                catchError(this.handleError.bind(this))
             );
     }
 
     getWeatherForecast() : Observable<any> {
-        return this.http.get('/getWeatherForecast', { headers: this.headers, observe: 'response' })
+        let headers = new HttpHeaders({
+            Authorization: 'Bearer ' + this.authSvc.getAuthToken()
+        })
+        return this.http.get('/getWeatherForecast', { headers, observe: 'response' })
             .pipe(
-                //catchError(this.handleError)
+                catchError(this.handleError.bind(this))
             );
     }
 
     redeemRewards(type) : Observable<any> {
-        return this.http.post('/redeemRewards', { user_id: this.authSvc.getUser().user_id, type }, { headers: this.headers, observe: 'response'} )
+        let headers = new HttpHeaders({
+            Authorization: 'Bearer ' + this.authSvc.getAuthToken()
+        })
+        return this.http.post('/redeemRewards', { user_id: this.authSvc.getUser().user_id, type }, { headers, observe: 'response'} )
             .pipe(
-                // catchError(this.handleError)
+                catchError(this.handleError).bind(this)
             );
     }
 
-    private handleError(error: HttpErrorResponse) {
+    private handleError (error: HttpErrorResponse) {
         if (error.error instanceof ErrorEvent) {
             // A client-side or network error occurred. Handle it accordingly.
             console.error('An error occurred:', error.error.message);
@@ -75,6 +89,11 @@ export class BackendService {
             console.error(
                 `Backend returned code ${error.status}, ` +
                 `body was: ${error.error}`);
+            if(error.status == 403) {
+                console.info('Executing logout from 403 Resp Code >>>>> ', error.error);
+                this.authSvc.logout();
+            }
+                
         }
         // Return an observable with a user-facing error message.
         return throwError(
