@@ -7,10 +7,11 @@ import { User } from '../model/model';
 
 @Injectable()
 export class AuthService implements CanActivate {
-    private token = localStorage.getItem('ylycToken');
+    private token = localStorage.getItem('ylycToken') ? localStorage.getItem('ylycToken') : '';
     public notificationEnabled$ = new BehaviorSubject(false);
     public rewards_pts$ = new BehaviorSubject(0);
-    private user: User = JSON.parse(localStorage.getItem('ylycUser'));
+    private user: User = localStorage.getItem('ylycUser') ? JSON.parse(localStorage.getItem('ylycUser')) : {};
+
 
     constructor(private http: HttpClient, private router: Router) { }
 
